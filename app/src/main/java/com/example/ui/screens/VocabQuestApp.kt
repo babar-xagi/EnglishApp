@@ -34,6 +34,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,11 +53,783 @@ fun VocabQuestApp(viewModel: VocabViewModel) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
 
     if (!isOnboardingCompleted) {
-        OnboardingScreen(onGetStarted = { name, level, goals, dailyTime, topics ->
-            viewModel.completeOnboarding(name, level, goals, dailyTime, topics)
-        })
+        LoginScreen(
+            onLoginSuccess = { name ->
+                viewModel.completeOnboarding(
+                    name = name,
+                    level = "Intermediate",
+                    goals = listOf("USA University Interview", "Daily Fluency"),
+                    dailyTime = 30,
+                    topics = listOf("AI & Data Science", "University Life")
+                )
+            },
+            onOnboardingComplete = { name, level, goals, dailyTime, topics ->
+                viewModel.completeOnboarding(name, level, goals, dailyTime, topics)
+            },
+            viewModel = viewModel
+        )
     } else {
         MainAppLayout(viewModel)
+    }
+}
+
+// --- DYNAMIC ILLUSTRATIVE DRAWINGS (PHONE 1 & PHONE 2 NO-ASSET EXACT REPLICAS) ---
+
+@Composable
+fun UserAvatar(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(52.dp)
+            .clip(CircleShape)
+            .background(Color(0xFFC8E6C9)), // Light green circle
+        contentAlignment = Alignment.Center
+    ) {
+        // Drawing/composing head + shoulders natively
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+            
+            // Draw shoulders (green shirt)
+            drawOval(
+                color = Color(0xFF2E7D32),
+                topLeft = androidx.compose.ui.geometry.Offset(width * 0.15f, height * 0.65f),
+                size = androidx.compose.ui.geometry.Size(width * 0.7f, height * 0.5f)
+            )
+            
+            // Draw neck
+            drawRect(
+                color = Color(0xFFFFCC80), // Skin tone
+                topLeft = androidx.compose.ui.geometry.Offset(width * 0.4f, height * 0.45f),
+                size = androidx.compose.ui.geometry.Size(width * 0.2f, height * 0.2f)
+            )
+            
+            // Draw head
+            drawCircle(
+                color = Color(0xFFFFCC80), // Skin tone
+                radius = width * 0.24f,
+                center = androidx.compose.ui.geometry.Offset(width * 0.5f, height * 0.38f)
+            )
+            
+            // Draw hair
+            drawArc(
+                color = Color(0xFF212121),
+                startAngle = 180f,
+                sweepAngle = 180f,
+                useCenter = true,
+                topLeft = androidx.compose.ui.geometry.Offset(width * 0.25f, height * 0.14f),
+                size = androidx.compose.ui.geometry.Size(width * 0.5f, height * 0.35f)
+            )
+            // Hair styling locks
+            drawCircle(
+                color = Color(0xFF212121),
+                radius = width * 0.08f,
+                center = androidx.compose.ui.geometry.Offset(width * 0.38f, height * 0.22f)
+            )
+            drawCircle(
+                color = Color(0xFF212121),
+                radius = width * 0.08f,
+                center = androidx.compose.ui.geometry.Offset(width * 0.62f, height * 0.22f)
+            )
+            
+            // Simple eyes
+            drawCircle(
+                color = Color(0xFF212121),
+                radius = width * 0.03f,
+                center = androidx.compose.ui.geometry.Offset(width * 0.43f, height * 0.38f)
+            )
+            drawCircle(
+                color = Color(0xFF212121),
+                radius = width * 0.03f,
+                center = androidx.compose.ui.geometry.Offset(width * 0.57f, height * 0.38f)
+            )
+            
+            // Smiling mouth
+            drawArc(
+                color = Color(0xFFD32F2F),
+                startAngle = 0f,
+                sweepAngle = 180f,
+                useCenter = false,
+                topLeft = androidx.compose.ui.geometry.Offset(width * 0.42f, height * 0.42f),
+                size = androidx.compose.ui.geometry.Size(width * 0.16f, height * 0.1f)
+            )
+        }
+    }
+}
+
+@Composable
+fun OpenBookDrawing() {
+    Canvas(modifier = Modifier.size(54.dp)) {
+        val w = size.width
+        val h = size.height
+        
+        // Background shadow
+        drawRoundRect(
+            color = Color(0xFFA5D6A7).copy(alpha = 0.5f),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.1f, h * 0.15f),
+            size = androidx.compose.ui.geometry.Size(w * 0.8f, h * 0.7f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx(), 6.dp.toPx())
+        )
+        
+        // Open Pages left
+        drawRoundRect(
+            color = Color.White,
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.12f, h * 0.2f),
+            size = androidx.compose.ui.geometry.Size(w * 0.35f, h * 0.55f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx(), 4.dp.toPx())
+        )
+        // Open Pages right
+        drawRoundRect(
+            color = Color.White,
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.53f, h * 0.2f),
+            size = androidx.compose.ui.geometry.Size(w * 0.35f, h * 0.55f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx(), 4.dp.toPx())
+        )
+        
+        // Spine center
+        drawRect(
+            color = Color(0xFF1B5E20),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.47f, h * 0.17f),
+            size = androidx.compose.ui.geometry.Size(w * 0.06f, h * 0.61f)
+        )
+        
+        // Subtle line markings in page
+        drawLine(
+            color = Color.LightGray,
+            start = androidx.compose.ui.geometry.Offset(w * 0.18f, h * 0.32f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.42f, h * 0.32f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawLine(
+            color = Color.LightGray,
+            start = androidx.compose.ui.geometry.Offset(w * 0.18f, h * 0.45f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.42f, h * 0.45f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawLine(
+            color = Color.LightGray,
+            start = androidx.compose.ui.geometry.Offset(w * 0.18f, h * 0.58f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.42f, h * 0.58f),
+            strokeWidth = 2.dp.toPx()
+        )
+        
+        drawLine(
+            color = Color.LightGray,
+            start = androidx.compose.ui.geometry.Offset(w * 0.58f, h * 0.32f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.82f, h * 0.32f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawLine(
+            color = Color.LightGray,
+            start = androidx.compose.ui.geometry.Offset(w * 0.58f, h * 0.45f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.82f, h * 0.45f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawLine(
+            color = Color.LightGray,
+            start = androidx.compose.ui.geometry.Offset(w * 0.58f, h * 0.58f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.82f, h * 0.58f),
+            strokeWidth = 2.dp.toPx()
+        )
+    }
+}
+
+@Composable
+fun GraduationHatDrawing() {
+    Canvas(modifier = Modifier.size(54.dp)) {
+        val w = size.width
+        val h = size.height
+        
+        // Bottom hat cap block
+        drawRect(
+            color = Color(0xFF1E3A8A),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.32f, h * 0.48f),
+            size = androidx.compose.ui.geometry.Size(w * 0.36f, h * 0.22f)
+        )
+        
+        // Mortarboard diamond top
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.5f, h * 0.22f) // top
+            lineTo(w * 0.85f, h * 0.42f) // right
+            lineTo(w * 0.5f, h * 0.62f) // bottom
+            lineTo(w * 0.15f, h * 0.42f) // left
+            close()
+        }
+        drawPath(path, color = Color(0xFF0F172A))
+        
+        // Tassel cord and ribbon on right side
+        drawLine(
+            color = Color(0xFFF59E0B), // Golden yellow
+            start = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.42f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.25f, h * 0.52f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawCircle(
+            color = Color(0xFFF59E0B), // Tassel end bobble
+            radius = w * 0.05f,
+            center = androidx.compose.ui.geometry.Offset(w * 0.23f, h * 0.54f)
+        )
+    }
+}
+
+@Composable
+fun IELTSHeadphonesDrawing() {
+    Canvas(modifier = Modifier.size(54.dp)) {
+        val w = size.width
+        val h = size.height
+        
+        // Main headband arc
+        drawArc(
+            color = Color(0xFF6B21A8), // Purple
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.2f, h * 0.22f),
+            size = androidx.compose.ui.geometry.Size(w * 0.6f, h * 0.55f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4.dp.toPx())
+        )
+        
+        // Left Ear pad
+        drawRoundRect(
+            color = Color(0xFF6B21A8),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.15f, h * 0.45f),
+            size = androidx.compose.ui.geometry.Size(w * 0.14f, h * 0.26f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx(), 6.dp.toPx())
+        )
+        
+        // Right Ear pad
+        drawRoundRect(
+            color = Color(0xFF6B21A8),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.71f, h * 0.45f),
+            size = androidx.compose.ui.geometry.Size(w * 0.14f, h * 0.26f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx(), 6.dp.toPx())
+        )
+        
+        // Microphone loop drawing
+        drawLine(
+            color = Color(0xFF9333EA),
+            start = androidx.compose.ui.geometry.Offset(w * 0.22f, h * 0.6f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.4f, h * 0.78f),
+            strokeWidth = 3.dp.toPx()
+        )
+        drawCircle(
+            color = Color(0xFF9333EA),
+            radius = w * 0.045f,
+            center = androidx.compose.ui.geometry.Offset(w * 0.42f, h * 0.8f)
+        )
+    }
+}
+
+@Composable
+fun InterviewBriefcaseDrawing() {
+    Canvas(modifier = Modifier.size(54.dp)) {
+        val w = size.width
+        val h = size.height
+        
+        // Handle on top
+        drawArc(
+            color = Color(0xFF78350F), // Dark leather brown
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.38f, h * 0.18f),
+            size = androidx.compose.ui.geometry.Size(w * 0.24f, h * 0.18f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+        )
+        
+        // Main briefcase brown container body
+        drawRoundRect(
+            color = Color(0xFF92400E), // Leather brown
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.15f, h * 0.32f),
+            size = androidx.compose.ui.geometry.Size(w * 0.7f, h * 0.46f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx(), 6.dp.toPx())
+        )
+        
+        // Horizontal decorative band
+        drawLine(
+            color = Color(0xFF78350F),
+            start = androidx.compose.ui.geometry.Offset(w * 0.15f, h * 0.46f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.85f, h * 0.46f),
+            strokeWidth = 3.dp.toPx()
+        )
+        
+        // Golden brass lock/clasp in middle
+        drawRect(
+            color = Color(0xFFF59E0B), // Gold
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.45f, h * 0.42f),
+            size = androidx.compose.ui.geometry.Size(w * 0.1f, h * 0.12f)
+        )
+        drawCircle(
+            color = Color(0xFF0F172A), // Black center keyhole
+            radius = w * 0.015f,
+            center = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.48f)
+        )
+    }
+}
+
+@Composable
+fun GridActionCard(
+    title: String,
+    containerColor: Color,
+    borderColor: Color,
+    arrowColor: Color,
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(160.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(1.5.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Icon layout
+            Box(
+                modifier = Modifier.size(54.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                icon()
+            }
+            
+            // Title
+            Text(
+                text = title,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 15.sp,
+                color = Color(0xFF1E293B)
+            )
+            
+            // Arrow indicator circle
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(arrowColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowOutward,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LoginIllustration() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        // Left: Potted Plant
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(end = 12.dp)
+        ) {
+            // Rounded leaves stack with offsets
+            Box(modifier = Modifier.size(60.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .offset(y = (-16).dp)
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(topStart = 16.dp, bottomEnd = 16.dp))
+                        .background(Color(0xFF2E7D32))
+                )
+                Box(
+                    modifier = Modifier
+                        .offset(x = (-14).dp, y = 4.dp)
+                        .size(22.dp)
+                        .clip(RoundedCornerShape(topEnd = 16.dp, bottomStart = 16.dp))
+                        .background(Color(0xFF4CAF50))
+                )
+                Box(
+                    modifier = Modifier
+                        .offset(x = 14.dp, y = 4.dp)
+                        .size(22.dp)
+                        .clip(RoundedCornerShape(topStart = 16.dp, bottomEnd = 16.dp))
+                        .background(Color(0xFF1B5E20))
+                )
+            }
+            // Terracotta Pot
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(30.dp)
+                    .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
+                    .background(Color(0xFF8D6E63))
+            )
+        }
+
+        // Center: Stack of Books
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        ) {
+            // Cream top book
+            Box(
+                modifier = Modifier
+                    .width(86.dp)
+                    .height(18.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFFFFF9C4)) // Lighter warm yellow
+                    .border(1.5.dp, Color(0xFFFBC02D), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(10.dp)
+                        .background(Color(0xFFFBC02D))
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            // Green "ENGLISH" middle book
+            Box(
+                modifier = Modifier
+                    .width(112.dp)
+                    .height(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFF386B40))
+                    .border(1.5.dp, Color(0xFF1B5E20), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "ENGLISH",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            // Red bottom book
+            Box(
+                modifier = Modifier
+                    .width(124.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFFD32F2F))
+                    .border(1.5.dp, Color(0xFF990000), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(14.dp)
+                        .background(Color(0xFF990000))
+                )
+            }
+        }
+
+        // Right: Green Cup
+        Box(
+            modifier = Modifier
+                .padding(start = 12.dp, bottom = 4.dp)
+                .size(46.dp),
+            contentAlignment = Alignment.BottomStart
+        ) {
+            // Handle
+            Box(
+                modifier = Modifier
+                    .offset(x = 22.dp, y = (-4).dp)
+                    .size(20.dp)
+                    .border(3.dp, Color(0xFF386B40), CircleShape)
+            )
+            // Body
+            Box(
+                modifier = Modifier
+                    .width(32.dp)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp))
+                    .background(Color(0xFF386B40)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Aa", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun LoginScreen(
+    onLoginSuccess: (String) -> Unit,
+    onOnboardingComplete: (String, String, List<String>, Int, List<String>) -> Unit,
+    viewModel: VocabViewModel
+) {
+    var screenState by remember { mutableStateOf("login") } // "login" or "onboarding"
+
+    var name by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+
+    if (screenState == "onboarding") {
+        OnboardingScreen(onGetStarted = { customName, level, goals, dailyTime, topics ->
+            onOnboardingComplete(customName, level, goals, dailyTime, topics)
+        })
+    } else {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color(0xFFF7FAF7) // soft light canvas matches Phone 1
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState()),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Aa Speechbubble Logo exact replica
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFF386B40)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .border(2.5.dp, Color.White, RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Aa",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 24.sp,
+                                    color = Color.White
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // VocabQuest Title
+                    Text(
+                        text = "VocabQuest",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.5.sp,
+                            color = Color(0xFF1B5E20)
+                        )
+                    )
+
+                    // Subtitle
+                    Text(
+                        text = "Improve English from\nBasic to Advanced",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Gray,
+                            lineHeight = 18.sp
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Dynamic Illustrative drawing
+                    LoginIllustration()
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Name input field Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = Color(0xFF386B40).copy(alpha = 0.7f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            BasicTextField(
+                                value = name,
+                                onValueChange = { name = it },
+                                modifier = Modifier.fillMaxWidth().testTag("login_name_input"),
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                    color = Color.DarkGray,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                decorationBox = { innerTextField ->
+                                    if (name.isEmpty()) {
+                                        Text(
+                                            "Name",
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                color = Color.Gray.copy(alpha = 0.7f)
+                                            )
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+                        }
+                    }
+
+                    // Password input field Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = Color(0xFF386B40).copy(alpha = 0.7f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            BasicTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                modifier = Modifier.weight(1f).testTag("login_password_input"),
+                                singleLine = true,
+                                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                    color = Color.DarkGray,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                decorationBox = { innerTextField ->
+                                    if (password.isEmpty()) {
+                                        Text(
+                                            "Password",
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                color = Color.Gray.copy(alpha = 0.7f)
+                                            )
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password view",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Login Button in exact deep green
+                    Button(
+                        onClick = {
+                            val targetName = name.ifBlank { "Babar" }
+                            onLoginSuccess(targetName)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp)
+                            .testTag("login_button"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20))
+                    ) {
+                        Text(
+                            text = "Login",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        )
+                    }
+
+                    // OR divider
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = Color.Gray.copy(alpha = 0.3f)
+                        )
+                        Text(
+                            text = "OR",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = Color.Gray.copy(alpha = 0.3f)
+                        )
+                    }
+
+                    // Create Account text button
+                    TextButton(
+                        onClick = { screenState = "onboarding" },
+                        modifier = Modifier.testTag("create_account_button")
+                    ) {
+                        Text(
+                            text = "Create Account",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1B5E20)
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+            }
+        }
     }
 }
 
@@ -619,7 +1394,7 @@ fun MainAppLayout(viewModel: VocabViewModel) {
                     .padding(innerPadding)
             ) {
                 when (selectedTab) {
-                    0 -> DashboardScreen(viewModel, onGoToMission = { selectedTab = 1 }, onGoToGames = { selectedTab = 3 })
+                    0 -> DashboardScreen(viewModel, onGoToTab = { selectedTab = it })
                     1 -> MissionInputScreen(viewModel)
                     2 -> VocabularyNotebookScreen(viewModel)
                     3 -> GamesScreen(viewModel)
@@ -695,719 +1470,358 @@ fun MainAppLayout(viewModel: VocabViewModel) {
 
 
 // --- TAB 1: DASHBOARD (HOME) ---
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DashboardScreen(viewModel: VocabViewModel, onGoToMission: () -> Unit, onGoToGames: () -> Unit) {
+fun DashboardScreen(
+    viewModel: VocabViewModel,
+    onGoToTab: (Int) -> Unit
+) {
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
-    val wordsCount by viewModel.wordCount.collectAsStateWithLifecycle()
-    val masteredWordsCount by viewModel.masteredWordCount.collectAsStateWithLifecycle()
-    val reviewsList by viewModel.wordsForReview.collectAsStateWithLifecycle()
-    val dailyInput by viewModel.selectedDailyInput.collectAsStateWithLifecycle()
+    val wordsList by viewModel.vocabWords.collectAsStateWithLifecycle()
+    val speakingPractices by viewModel.speakingPractices.collectAsStateWithLifecycle()
+    
+    // Checklist interactive states (fallback to custom remember state so users can also click to toggle)
+    var isLearnGoalCompleted by remember(wordsList) { mutableStateOf(wordsList.size >= 5) }
+    var isSpeakingGoalCompleted by remember(speakingPractices) { mutableStateOf(speakingPractices.isNotEmpty()) }
+    var isReviewGoalCompleted by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .background(Color(0xFFF7FAF7)) // soft off-white canvas
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Geometric Header greeting with subtle background gradients and crisp card bounds
+        // 1. Header greeting
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Cartoon Boy profile avatar
+                UserAvatar()
+                
+                Column {
+                    Text(
+                        "Good Morning,",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "${profile?.name ?: "Babar"} 👋",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF1E293B)
+                        )
+                    )
+                }
+            }
+            
+            // Notification bell with green badge dot
+            Box {
+                IconButton(onClick = { /* Handle notifications */ }) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = Color(0xFF1E293B),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                // Little green dot
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF386B40))
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-4).dp, y = (4).dp)
+                )
+            }
+        }
+
+        // 2. Streak Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Hello, ${profile?.name ?: "Learner"}!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "Ready to master native English?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Lvl: ${profile?.level ?: "Intermediate"}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "XP: ${profile?.totalXP ?: 0}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                    }
-                }
-                
-                // Symmetrical decorative circle container representing XP level boundaries
+                // Flame icon round wrapper
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                        .background(Color(0xFFFFF3E0)), // light orange
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.School,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Text("🔥", fontSize = 24.sp)
                 }
-            }
-        }
-
-        // --- HOOK FOR THE DUSTY-GOLD DAILY MISSION COMPONENT ---
-        val vocabList by viewModel.vocabWords.collectAsStateWithLifecycle()
-        val wordsLearnedToday = remember(vocabList) {
-            vocabList.filter { 
-                val diff = System.currentTimeMillis() - it.learnedAt
-                diff < 24 * 60 * 60 * 1000 // learned in last 24 hours
-            }.size
-        }
-        val targetDailyGoal = 5
-        val progressPercentage = (wordsLearnedToday.toFloat() / targetDailyGoal.toFloat()).coerceIn(0f, 1f)
-        val animatedProgress by animateFloatAsState(
-            targetValue = progressPercentage,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-            label = "MissionProgress"
-        )
-
-        Card(
-            modifier = Modifier.fillMaxWidth().testTag("daily_mission_card"),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f)
-            ),
-            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                Column(modifier = Modifier.weight(1f)) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MilitaryTech,
-                                contentDescription = "Daily Goal Medal",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
                         Column {
                             Text(
-                                "Daily Mission",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                "7 Day Streak",
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color(0xFF1E293B)
                             )
                             Text(
-                                "Target: Learn 5 words",
+                                "Keep it up!",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
                         }
+                        
+                        Text(
+                            "120 XP",
+                            fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF386B40) // Green XP
+                        )
                     }
-
+                    
+                    Spacer(modifier = Modifier.height(10.dp))
+                    
+                    // Streak Progress Bar in green
                     Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = if (wordsLearnedToday >= targetDailyGoal) "Completed! 🎉" else "$wordsLearnedToday / $targetDailyGoal",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = Color.White
-                        )
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Daily Progression Tracker",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "${(progressPercentage * 100).toInt()}%",
-                            fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    LinearProgressIndicator(
-                        progress = animatedProgress,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp)),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                    )
-                }
-
-                Text(
-                    text = if (wordsLearnedToday >= targetDailyGoal) {
-                        "Absolute genius! You have conquered your daily mission. Keep building your streak! 🌟"
-                    } else {
-                        "Boost your writing, listening, and speaking skills instantly by discovering more new words!"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-
-                Button(
-                    onClick = { onGoToMission() },
-                    modifier = Modifier.fillMaxWidth().testTag("start_next_task_button"),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Launch,
-                        contentDescription = "Launch Target Mission",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                            .height(8.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFF1F5F9))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(0.7f) // 7/10 is 70% progress matches
+                                .clip(CircleShape)
+                                .background(Color(0xFF386B40))
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(6.dp))
+                    
                     Text(
-                        text = if (wordsLearnedToday >= targetDailyGoal) "Proceed to Daily Readings" else "Start Next Task",
-                        fontWeight = FontWeight.Bold
+                        "7 / 10",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.End)
                     )
                 }
             }
         }
 
-        // --- GEOMETRIC BALANCE METRIC PANEL BLOCK ---
+        // 3. Grid of 4 Cards (2x2 Column layout)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                // Class/Book card: English
+                GridActionCard(
+                    title = "English",
+                    containerColor = Color(0xFFE8F5E9),
+                    borderColor = Color(0xFFC8E6C9),
+                    arrowColor = Color(0xFF2E7D32),
+                    icon = { OpenBookDrawing() },
+                    onClick = { onGoToTab(2) }, // Goes to Notebook (Learn)
+                    modifier = Modifier.weight(1f)
+                )
+                // Graduation/Quiz exam card: DET
+                GridActionCard(
+                    title = "DET",
+                    containerColor = Color(0xFFE3F2FD),
+                    borderColor = Color(0xFFBBDEFB),
+                    arrowColor = Color(0xFF1A73E8),
+                    icon = { GraduationHatDrawing() },
+                    onClick = { onGoToTab(3) }, // Goes to Games (Exam prep quiz)
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                // Headset practice listening/speaking: IELTS
+                GridActionCard(
+                    title = "IELTS",
+                    containerColor = Color(0xFFF3E5F5),
+                    borderColor = Color(0xFFE1BEE7),
+                    arrowColor = Color(0xFF8E24AA),
+                    icon = { IELTSHeadphonesDrawing() },
+                    onClick = { onGoToTab(1) }, // Goes to Mission (Speaking practice)
+                    modifier = Modifier.weight(1f)
+                )
+                // Briefcase Interview coach card: Interview
+                GridActionCard(
+                    title = "Interview",
+                    containerColor = Color(0xFFFFF3E0),
+                    borderColor = Color(0xFFFFE0B2),
+                    arrowColor = Color(0xFFE65100),
+                    icon = { InterviewBriefcaseDrawing() },
+                    onClick = { onGoToTab(4) }, // Goes to Coach (Profile/Admissions mock)
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        // 4. Today's Goal Header row
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // METRIC 1: Daily Streak Card (Left Panel)
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(180.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Daily Streak",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFFFF3E0)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocalFireDepartment,
-                                contentDescription = "Streak Fire",
-                                tint = Color(0xFFE65100),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    Column {
-                        val activeStreak = profile?.streak ?: 1
-                        Text(
-                            text = "$activeStreak Days",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Consistency Quest",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
-                            fontSize = 10.sp
-                        )
-                    }
-
-                    // Habit Tracker Grid
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val activeStreak = profile?.streak ?: 1
-                        for (i in 0 until 7) {
-                            val isActive = i < activeStreak
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(10.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(
-                                        if (isActive) Color(0xFFFFA726)
-                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                    )
-                            )
-                        }
-                    }
-                }
-            }
-
-            // METRIC 2: Words Learned & Mastery level (Right Panel)
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(180.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Words Saved",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
-                                contentDescription = "Words Count",
-                                tint = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Column {
-                            Text(
-                                text = "$wordsCount",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            val rate = if (wordsCount > 0) (masteredWordsCount * 100 / wordsCount) else 0
-                            Text(
-                                text = "$rate% Mastery",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f),
-                                fontSize = 11.sp
-                            )
-                        }
-                        
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp)) {
-                            val rate = if (wordsCount > 0) (masteredWordsCount * 100 / wordsCount) else 0
-                            CircularProgressIndicator(
-                                progress = if (wordsCount > 0) (masteredWordsCount.toFloat() / wordsCount.toFloat()) else 0f,
-                                modifier = Modifier.fillMaxSize(),
-                                strokeWidth = 5.dp,
-                                color = MaterialTheme.colorScheme.secondary,
-                                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                            )
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "$masteredWordsCount Mastered Items",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-        }
-
-        // --- THE CURRENT DAILY MISSION CARD (The active centerpiece) ---
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Header of Active Mission
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "Mission Icon",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Text(
-                            text = "CURRENT DAILY MISSION",
-                            letterSpacing = 1.2.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    // Topic difficulty chip
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = dailyInput?.difficulty ?: "Intermediate",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
-
-                // Mission details
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = dailyInput?.title ?: "No Mission Active",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.MenuBook,
-                            contentDescription = null,
-                            tint = Color.Gray,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Text(
-                            text = "Theme Topic: ${dailyInput?.topic ?: "General Study"}",
-                            fontSize = 12.sp,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                // Sentence snippet teaser
-                dailyInput?.let { input ->
-                    Text(
-                        text = "\"${input.text.take(110)}...\"",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                        lineHeight = 18.sp,
-                        style = androidx.compose.ui.text.TextStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
-                    )
-                }
-
-                // Keyword chips preview
-                dailyInput?.let { input ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        input.keyWords.take(3).forEach { kw ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = kw,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        if (input.keyWords.size > 3) {
-                            Text(
-                                text = "+${input.keyWords.size - 3} more",
-                                fontSize = 11.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.align(Alignment.CenterVertically),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
-                // CTA Launch Button
-                Button(
-                    onClick = onGoToMission,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Text("Launch Mission Quest", fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Go",
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
-
-        // --- SECONDARY SYSTEM TASK CARD (Spaced Repetitive & Sandbox Play) ---
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Spaced Repetition & Training",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "🎯 Today's Goal",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF1E293B)
+                    )
                 )
-
-                Divider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
-
-                // Review Queue Row
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onGoToGames() }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                if (reviewsList.isNotEmpty()) MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
-                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Cached,
-                            contentDescription = null,
-                            tint = if (reviewsList.isNotEmpty()) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+            }
+            TextButton(onClick = { /* Handle Goals details */ }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "View All",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF386B40)
                         )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Vocabulary Review Suite", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(
-                            text = if (reviewsList.isEmpty()) "All review tasks are completed today!" 
-                                   else "${reviewsList.size} vocabulary items waiting for review", 
-                            fontSize = 12.sp, 
-                            color = Color.Gray
-                        )
-                    }
-                    if (reviewsList.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text("DUE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
-                        }
-                    } else {
-                        Icon(Icons.Default.Check, contentDescription = "Done", tint = Color.Green, modifier = Modifier.size(16.dp))
-                    }
-                }
-
-                Divider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
-
-                // Sandbox Game Launcher Row
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onGoToGames() }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.VideogameAsset,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Vocabulary Playground", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("Challenge synonyms, sentences tenses, and play AI customized quizzes.", fontSize = 12.sp, color = Color.Gray)
-                    }
-                    Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(">", fontWeight = FontWeight.ExtraBold, color = Color(0xFF386B40))
                 }
             }
         }
 
-        // --- FOCUS AREAS CARD ---
+        // 5. Checklist rows
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            border = BorderStroke(1.dp, Color(0xFFF1F5F9))
         ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Text(
-                    text = "Quest Focus Areas",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+            Column(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Goal 1 Row
+                GoalItemRow(
+                    title = "Learn 5 words",
+                    isCompleted = isLearnGoalCompleted,
+                    avatarBackground = Color(0xFFE8F5E9),
+                    iconColor = Color(0xFF2E7D32),
+                    imageVector = Icons.Default.MenuBook,
+                    onClick = { isLearnGoalCompleted = !isLearnGoalCompleted }
                 )
-                Spacer(modifier = Modifier.height(10.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    profile?.goals?.split(",")?.forEach { goal ->
-                        if (goal.isNotBlank()) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(goal, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                    }
-                    profile?.favoriteTopics?.split(",")?.forEach { topic ->
-                        if (topic.isNotBlank()) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(topic, color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                    }
-                }
+                
+                HorizontalDivider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(horizontal = 12.dp))
+                
+                // Goal 2 Row
+                GoalItemRow(
+                    title = "1 speaking practice",
+                    isCompleted = isSpeakingGoalCompleted,
+                    avatarBackground = Color(0xFFE3F2FD),
+                    iconColor = Color(0xFF1A73E8),
+                    imageVector = Icons.Default.Mic,
+                    onClick = { isSpeakingGoalCompleted = !isSpeakingGoalCompleted }
+                )
+                
+                HorizontalDivider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(horizontal = 12.dp))
+                
+                // Goal 3 Row
+                GoalItemRow(
+                    title = "Review old words",
+                    isCompleted = isReviewGoalCompleted,
+                    avatarBackground = Color(0xFFFFF3E0),
+                    iconColor = Color(0xFFE65100),
+                    imageVector = Icons.Default.Refresh,
+                    onClick = { isReviewGoalCompleted = !isReviewGoalCompleted }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GoalItemRow(
+    title: String,
+    isCompleted: Boolean,
+    avatarBackground: Color,
+    iconColor: Color,
+    imageVector: ImageVector,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Circle avatar wrapper
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(avatarBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = imageVector,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF334155)
+                )
+            )
+        }
+        
+        // Circular checkbox widget
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .border(2.dp, if (isCompleted) Color(0xFF386B40) else Color.Gray.copy(alpha = 0.5f), CircleShape)
+                .background(if (isCompleted) Color(0xFF386B40) else Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isCompleted) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Completed checkmark",
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
             }
         }
     }
