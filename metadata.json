@@ -1,0 +1,6 @@
+{
+  "name": "VocabQuest",
+  "description": "An interactive, gamified English vocabulary, speaking, listening, and interview prep app powered by Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Sophisticated Graduation Cap Vector centered strictly inside the 66dp safe zone (viewport 20 to 88) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26 L18,44 L54,62 L84,47 L84,68 L90,68 L90,44 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,53 L36,71 C36,80 72,80 72,71 L72,53 L54,62 Z" />
+</vector>
