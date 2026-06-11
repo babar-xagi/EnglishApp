@@ -38,7 +38,9 @@ data class VocabularyWord(
     val nextReviewAt: Long = System.currentTimeMillis(),
     val reviewCount: Int = 0,
     val masteryLevel: Int = 1, // 1 to 5
-    val mistakes: Int = 0
+    val mistakes: Int = 0,
+    val syllables: String = "", // Semicolon-separated or hyphens (e.g. syl-la-ble)
+    val imageUrl: String = "" // Optional illustration web URL
 )
 
 @Entity(tableName = "speaking_practices")
@@ -155,7 +157,7 @@ interface GameResultDao {
         WritingPractice::class,
         GameResult::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

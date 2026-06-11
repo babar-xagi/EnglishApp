@@ -378,20 +378,36 @@ class VocabViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Add manual custom word to dictionary notebook
-    fun addWordManually(word: String, type: String, meaning: String, sentence: String, nativeWord: String = "") {
+    fun addWordManually(
+        word: String,
+        type: String,
+        meaning: String,
+        sentence: String,
+        nativeWord: String = "",
+        explanation: String = "",
+        pronunciation: String = "",
+        synonyms: String = "",
+        antonyms: String = "",
+        syllables: String = "",
+        imageUrl: String = ""
+    ) {
         viewModelScope.launch {
             val vocab = VocabularyWord(
                 word = word.trim().lowercase(),
                 meaning = meaning.trim(),
-                simpleExplanation = "Manually entered custom vocabulary.",
+                simpleExplanation = explanation.trim().ifBlank { "Manually entered custom vocabulary." },
                 nativeMeaning = nativeWord.trim(),
                 wordType = type,
-                pronunciation = "custom pronunciation",
+                pronunciation = pronunciation.trim().ifBlank { "custom pronunciation" },
                 exampleSentence = sentence.trim().ifBlank { "No initial sentence provided." },
+                synonyms = synonyms.trim(),
+                antonyms = antonyms.trim(),
                 topic = "Personal Custom",
                 difficultyLevel = "B2",
                 learnedAt = System.currentTimeMillis(),
-                nextReviewAt = System.currentTimeMillis() + 86400000
+                nextReviewAt = System.currentTimeMillis() + 86400000,
+                syllables = syllables.trim(),
+                imageUrl = imageUrl.trim()
             )
             repository.insertVocabularyWord(vocab)
             addXPReward(10)

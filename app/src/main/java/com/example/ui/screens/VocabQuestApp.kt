@@ -2363,6 +2363,7 @@ fun VocabularyNotebookScreen(
     onGoToTab: (Int) -> Unit
 ) {
     var activeSubTab by remember { mutableStateOf(EnglishSubTab.DASHBOARD) }
+    var selectedDeckType by remember { mutableStateOf<String?>(null) }
     
     // Core data streams
     val savedWords by viewModel.vocabWords.collectAsStateWithLifecycle()
@@ -2371,8 +2372,8 @@ fun VocabularyNotebookScreen(
     val speakingPractices by viewModel.speakingPractices.collectAsStateWithLifecycle()
 
     // Interactive checklist states
-    var planWordGoalCompleted by remember { mutableStateOf(true) }
-    var planGrammarGoalCompleted by remember { mutableStateOf(true) }
+    var planWordGoalCompleted by remember { mutableStateOf(false) }
+    var planGrammarGoalCompleted by remember { mutableStateOf(false) }
     var planSpeakingGoalCompleted by remember { mutableStateOf(false) }
 
     // Dictionary list filters (old mechanics)
@@ -2387,6 +2388,12 @@ fun VocabularyNotebookScreen(
     var manualMeaning by remember { mutableStateOf("") }
     var manualSentence by remember { mutableStateOf("") }
     var manualNative by remember { mutableStateOf("") }
+    var manualExplanation by remember { mutableStateOf("") }
+    var manualPronunciation by remember { mutableStateOf("") }
+    var manualSynonyms by remember { mutableStateOf("") }
+    var manualAntonyms by remember { mutableStateOf("") }
+    var manualSyllables by remember { mutableStateOf("") }
+    var manualImageUrl by remember { mutableStateOf("") }
 
     // Dynamic queue of vocabulary cards to review (blends saved words & standards)
     val studyDeck = remember(savedWords) {
@@ -2422,10 +2429,14 @@ fun VocabularyNotebookScreen(
                         meaning = wt.meaning,
                         simpleExplanation = wt.explanation,
                         nativeMeaning = when(wt.word.lowercase()) {
+                            "flexible" -> "آسانی سے بدلنے یا ایڈجسٹ کرنے کے قابل۔"
                             "intuitive" -> "بغیر کسی خاص تربیت کے قدرتی طور پر سمجھنے کے قابل۔"
                             "beneficial" -> "نہایت فائدہ مند یا سود مند"
                             "automation" -> "خود کار آپریشن یا نظام"
                             "academic performance" -> "تعلیمی کارکردگی (سکول یا کالج)"
+                            "scholarship" -> "مالی امداد جو طالب علم کو تعلیم کے لیے دی جاتی ہے۔"
+                            "confident" -> "اپنے اور اپنی صلاحیتوں پر یقین رکھنا۔"
+                            "obsolete" -> "اب تیار یا استعمال نہیں کیا جاتا؛ پرانا۔"
                             else -> "رہنمائی اور معاون عنصر۔"
                         },
                         wordType = wt.wordType,
@@ -2442,10 +2453,81 @@ fun VocabularyNotebookScreen(
         list
     }
 
-    // Study index
-    var deckIndex by remember { mutableStateOf(0) }
-    val activeDeckIndex = deckIndex.coerceIn(0, studyDeck.size - 1)
-    val activeWordItem = studyDeck[activeDeckIndex]
+    // Filtered lists of words based on chosen deck
+    val currentDeckWords = remember(selectedDeckType, savedWords, studyDeck, dictionarySearchWord) {
+        val rawList = studyDeck
+        val filtered = when (selectedDeckType) {
+            "Basic Daily Words" -> rawList.filter { 
+                it.word.lowercase() in listOf("flexible", "confident", "scholarship") || 
+                it.topic.lowercase().contains("daily") || 
+                it.topic.lowercase().contains("comm") || 
+                it.topic.lowercase().contains("life")
+            }
+            "Education" -> rawList.filter { 
+                it.topic.lowercase().contains("edu") || 
+                it.topic.lowercase().contains("uni") || 
+                it.word.lowercase() in listOf("flexible", "scholarship") 
+            }
+            "Interview" -> rawList.filter { 
+                it.topic.lowercase().contains("interview") || 
+                it.topic.lowercase().contains("job") || 
+                it.word.lowercase() in listOf("confident", "purpose", "sponsor", "flexible") 
+            }
+            "Technology" -> rawList.filter { 
+                it.topic.lowercase().contains("tech") || 
+                it.topic.lowercase().contains("autom") || 
+                it.topic.lowercase().contains("intellig") || 
+                it.word.lowercase() in listOf("intuitive", "automation", "obsolete") 
+            }
+            "Review Mistakes", "Weak Words" -> {
+                rawList.filter { 
+                    it.word.lowercase() in listOf("obsolete", "intuitive") || 
+                    it.difficultyLevel == "B2" || 
+                    it.difficultyLevel == "C1" 
+                }
+            }
+            "Saved Words" -> savedWords
+            "Learn New" -> rawList.filter { 
+                it.word.lowercase() in listOf("flexible", "intuitive", "scholarship", "automation") 
+            }
+            "Review" -> rawList.take(5)
+            "Search Results" -> {
+                if (dictionarySearchWord.isNotBlank()) {
+                    rawList.filter { 
+                        it.word.lowercase().contains(dictionarySearchWord.lowercase()) ||
+                        it.topic.lowercase().contains(dictionarySearchWord.lowercase()) ||
+                        it.meaning.lowercase().contains(dictionarySearchWord.lowercase())
+                    }
+                } else {
+                    rawList
+                }
+            }
+            else -> rawList
+        }
+        
+        if (filtered.isEmpty()) {
+            listOf(
+                VocabularyWord(
+                    word = "Flexible",
+                    meaning = "able to change or adjust easily.",
+                    simpleExplanation = "Capable of bending or being adapted easily to suit circumstances without breaking or causing conflicts.",
+                    nativeMeaning = "آسانی سے بدلنے یا ایڈجسٹ کرنے کے قابل۔",
+                    wordType = "adjective",
+                    pronunciation = "/'flek.sə.bəl/",
+                    exampleSentence = "Online learning is flexible because students can study at any time.",
+                    synonyms = "adaptable;adjustable;elastic",
+                    antonyms = "rigid;fixed;unbending",
+                    topic = "Education",
+                    difficultyLevel = "B1"
+                )
+            )
+        } else filtered
+    }
+
+    // Dynamic studying index
+    var deckIndex by remember(selectedDeckType) { mutableStateOf(0) }
+    val activeDeckIndex = if (currentDeckWords.isNotEmpty()) deckIndex.coerceIn(0, currentDeckWords.size - 1) else 0
+    val activeWordItem = if (currentDeckWords.isNotEmpty()) currentDeckWords[activeDeckIndex] else null
 
     // Practice Sentence attributes
     var isPracticeInputActive by remember { mutableStateOf(false) }
@@ -2457,6 +2539,18 @@ fun VocabularyNotebookScreen(
     var isSpeakPracticeActive by remember { mutableStateOf(false) }
     var isMicrophonePulsing by remember { mutableStateOf(false) }
     var speakFeedbackText by remember { mutableStateOf<String?>(null) }
+
+    // Inline multiple choice blanks practices
+    var isFillBlankActive by remember { mutableStateOf(false) }
+    var selectedBlankOption by remember { mutableStateOf<String?>(null) }
+    var fillBlankFeedbackMsg by remember { mutableStateOf<String?>(null) }
+    var fillBlankCompleted by remember { mutableStateOf(false) }
+
+    val blankOptions = remember(activeWordItem) {
+        val correct = activeWordItem?.word?.lowercase() ?: "flexible"
+        val distractors = listOf("traditional", "expensive", "harmful", "rigid", "obsolete", "intuitive", "easy").filter { it != correct }
+        (distractors.shuffled().take(3) + correct).shuffled()
+    }
 
     // TTS voice support
     val context = LocalContext.current
@@ -2478,12 +2572,27 @@ fun VocabularyNotebookScreen(
 
     // Dynamic back handler (sets up the back action nicely)
     val currentViewHandler: () -> Unit = {
-        if (activeSubTab != EnglishSubTab.DASHBOARD) {
+        if (selectedDeckType != null) {
+            selectedDeckType = null
             activeSubTab = EnglishSubTab.DASHBOARD
             isPracticeInputActive = false
             isSpeakPracticeActive = false
+            isFillBlankActive = false
             practiceFeedbackMsg = null
             speakFeedbackText = null
+            fillBlankFeedbackMsg = null
+            selectedBlankOption = null
+            fillBlankCompleted = false
+        } else if (activeSubTab != EnglishSubTab.DASHBOARD) {
+            activeSubTab = EnglishSubTab.DASHBOARD
+            isPracticeInputActive = false
+            isSpeakPracticeActive = false
+            isFillBlankActive = false
+            practiceFeedbackMsg = null
+            speakFeedbackText = null
+            fillBlankFeedbackMsg = null
+            selectedBlankOption = null
+            fillBlankCompleted = false
         } else {
             onGoToTab(0) // Back to quest home
         }
@@ -2496,295 +2605,337 @@ fun VocabularyNotebookScreen(
     ) {
         when (activeSubTab) {
             EnglishSubTab.DASHBOARD -> {
+                if (selectedDeckType != null) {
+                    LaunchedEffect(selectedDeckType) {
+                        activeSubTab = EnglishSubTab.VOCAB_FLASHCARDS
+                    }
+                }
                 // PHONE 1: ENGLISH CATEGORY DASHBOARD
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Header Row
+                    // Title header section
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = currentViewHandler) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF1E293B))
-                        }
-                        
-                        Text(
-                            "English",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color(0xFF1E293B)
-                        )
-
-                        Box {
-                            IconButton(onClick = { viewModel.triggerBriefNotification("Goals are fully synced with the Cloud!") }) {
-                                Icon(Icons.Default.Notifications, contentDescription = "Alerts", tint = Color(0xFF1E293B))
-                            }
-                            // Green badge dot
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF2E7D32))
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = (-4).dp, y = (4).dp)
-                            )
-                        }
-                    }
-
-                    // Large Title Section with Illustration
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column {
                             Text(
-                                "Build Your",
-                                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Black),
-                                color = Color(0xFF2E7D32)
+                                "Grow Your Vocabulary",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 24.sp,
+                                    color = Color(0xFF2E7D32)
+                                )
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                "English",
-                                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Black),
-                                color = Color(0xFF2E7D32)
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                "Vocabulary, grammar, speaking and listening in one place.",
+                                "Learn, review, and use words in real life.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray
                             )
                         }
-                        IllustratedBookHeader()
+                        
+                        Box {
+                            IconButton(onClick = { viewModel.triggerBriefNotification("You are on a 7-day streak! Keep growing.") }) {
+                                Icon(
+                                        imageVector = Icons.Default.Notifications,
+                                        contentDescription = "Alerts",
+                                        tint = Color(0xFF2E7D32),
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE11D48))
+                                        .align(Alignment.TopEnd)
+                                        .offset(x = (-4).dp, y = (4).dp)
+                                )
+                            }
+                        }
+
+                        // Progress Stats Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                                        Text("Words Learned", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text("${128 + savedWords.size}", fontWeight = FontWeight.Black, fontSize = 22.sp, color = Color(0xFF2E7D32))
+                                    }
+                                    VerticalDivider(color = Color(0xFFE2E8F0), modifier = Modifier.height(32.dp))
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                                        Text("Due Today", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text("12", fontWeight = FontWeight.Black, fontSize = 22.sp, color = Color(0xFFD84315))
+                                    }
+                                    VerticalDivider(color = Color(0xFFE2E8F0), modifier = Modifier.height(32.dp))
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(16.dp))
+                                            Text("Streak", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text("7 days", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color(0xFF1E293B))
+                                    }
+                                }
+
+                                HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Overall Progress", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                                        Text("64%", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF2E7D32))
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = 0.64f,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(8.dp)
+                                            .clip(CircleShape),
+                                        color = Color(0xFF2E7D32),
+                                        trackColor = Color(0xFFE8F5E9)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Search Bar
+                        OutlinedTextField(
+                            value = dictionarySearchWord,
+                            onValueChange = { dictionarySearchWord = it },
+                            placeholder = { Text("Search words or topics (e.g. education, flexible)") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                            trailingIcon = {
+                                if (dictionarySearchWord.isNotBlank()) {
+                                    IconButton(onClick = { dictionarySearchWord = "" }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Clear", tint = Color.Gray)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF2E7D32),
+                                unfocusedBorderColor = Color(0xFFE2E8F0),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White
+                            ),
+                            singleLine = true
+                        )
+
+                        // Inline Search Results Panel
+                        if (dictionarySearchWord.isNotBlank()) {
+                            val matched = studyDeck.filter { 
+                                it.word.lowercase().contains(dictionarySearchWord.lowercase()) ||
+                                it.topic.lowercase().contains(dictionarySearchWord.lowercase()) ||
+                                it.meaning.lowercase().contains(dictionarySearchWord.lowercase())
+                            }
+                            
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, Color(0xFF2E7D32))
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "Search Results (${matched.size})",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF2E7D32)
+                                    )
+                                    if (matched.isEmpty()) {
+                                        Text("No matching vocabulary words found.", fontSize = 12.sp, color = Color.Gray)
+                                    } else {
+                                        matched.forEach { wordItem ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        selectedDeckType = "Search Results"
+                                                        val idx = studyDeck.indexOfFirst { it.word.lowercase() == wordItem.word.lowercase() }
+                                                        if (idx >= 0) {
+                                                            deckIndex = idx
+                                                        }
+                                                        activeSubTab = EnglishSubTab.VOCAB_FLASHCARDS
+                                                    }
+                                                    .padding(vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column {
+                                                    Text(wordItem.word, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B), fontSize = 14.sp)
+                                                    Text(wordItem.meaning, fontSize = 11.sp, color = Color.Gray, maxLines = 1)
+                                                }
+                                                Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(14.dp))
+                                            }
+                                            HorizontalDivider(color = Color(0xFFF1F5F9))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    // Word Decks / Topic Packs Title Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Your Word Decks",
+                            fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF1E293B)
+                        )
+                        TextButton(onClick = { activeSubTab = EnglishSubTab.DICTIONARY_LIST }) {
+                            Text("See all", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                        }
                     }
 
-                    // Progress Card
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                    // Topics List Decks Group
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        listOf(
+                            Triple("Basic Daily Words", "58 words", Icons.Default.MenuBook),
+                            Triple("Education", "42 words", Icons.Default.School),
+                            Triple("Interview", "36 words", Icons.Default.Assignment),
+                            Triple("Technology", "45 words", Icons.Default.Computer),
+                            Triple("Review Mistakes", "23 words", Icons.Default.ErrorOutline)
+                        ).forEach { deckItem ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedDeckType = deckItem.first
+                                        activeSubTab = EnglishSubTab.VOCAB_FLASHCARDS
+                                    },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                             ) {
                                 Row(
+                                    modifier = Modifier.padding(14.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    // Custom visual progressive Dial
-                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(54.dp)) {
-                                        CircularProgressIndicator(
-                                            progress = 0.6f,
-                                            strokeWidth = 6.dp,
-                                            color = Color(0xFF2E7D32),
-                                            trackColor = Color(0xFFE8F5E9)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0xFFE8F5E9)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = deckItem.third,
+                                            contentDescription = null,
+                                            tint = Color(0xFF2E7D32),
+                                            modifier = Modifier.size(20.dp)
                                         )
-                                        Text("60%", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF2E7D32))
                                     }
-                                    
-                                    Column {
-                                        Text("Your Progress", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.bodyLarge, color = Color(0xFF1E293B))
-                                        Text("Overall Study Completion", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(deckItem.first, fontWeight = FontWeight.Black, fontSize = 14.sp, color = Color(0xFF1E293B))
+                                        Text(deckItem.second, fontSize = 11.sp, color = Color.Gray)
                                     }
-                                }
-                            }
-
-                            // Horizontal progress slider representation
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFE2E8F0))
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(0.6f)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF2E7D32))
-                                )
-                            }
-
-                            HorizontalDivider(color = Color(0xFFF1F5F9))
-
-                            // Three stats info row
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.School, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(20.dp))
-                                    Text("Level", fontSize = 11.sp, color = Color.Gray)
-                                    Text("Basic", fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF1E293B))
-                                }
-                                VerticalDivider(color = Color(0xFFE2E8F0), modifier = Modifier.height(34.dp))
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF9100), modifier = Modifier.size(20.dp))
-                                    Text("Streak", fontSize = 11.sp, color = Color.Gray)
-                                    Text("7 days", fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF1E293B))
-                                }
-                                VerticalDivider(color = Color(0xFFE2E8F0), modifier = Modifier.height(34.dp))
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFD54F), modifier = Modifier.size(20.dp))
-                                    Text("XP", fontSize = 11.sp, color = Color.Gray)
-                                    Text("120 XP", fontWeight = FontWeight.Black, fontSize = 13.sp, color = Color(0xFF1E293B))
+                                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
                                 }
                             }
                         }
                     }
 
-                    // Section Flashcards
+                    // 4 Interactive Quick Action Buttons Tiles
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.Book, contentDescription = null, tint = Color(0xFF2E7D32))
-                        Text("Flashcards", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium, color = Color(0xFF1E293B))
+                        val quickActions = listOf(
+                            Triple("Learn New", Icons.Default.LibraryAdd, Color(0xFFE8F5E9)),
+                            Triple("Review", Icons.Default.Sync, Color(0xFFF3E5F5)),
+                            Triple("Saved", Icons.Default.Bookmark, Color(0xFFE3F2FD)),
+                            Triple("Weak", Icons.Default.Warning, Color(0xFFFFF3E0))
+                        )
+                        quickActions.forEach { item ->
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        selectedDeckType = if (item.first == "Saved") "Saved Words" else if (item.first == "Weak") "Weak Words" else item.first
+                                        activeSubTab = EnglishSubTab.VOCAB_FLASHCARDS
+                                    },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = item.third),
+                                border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.15f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = item.second,
+                                        contentDescription = item.first,
+                                        tint = when (item.first) {
+                                            "Learn New" -> Color(0xFF2E7D32)
+                                            "Review" -> Color(0xFF8E24AA)
+                                            "Saved" -> Color(0xFF1973E8)
+                                            else -> Color(0xFFE65100)
+                                        },
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        item.first,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF334155),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    // Grid Layout representing Vocabulary and Grammar Dual pillars
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    // Trigger for custom word additions
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showManualAddDialog = true },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                        border = BorderStroke(1.dp, Color(0xFFFFCC80))
                     ) {
-                        // Card A: Vocabulary Flashcards
-                        Card(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    isPracticeInputActive = false
-                                    isSpeakPracticeActive = false
-                                    activeSubTab = EnglishSubTab.VOCAB_FLASHCARDS
-                                },
-                            shape = RoundedCornerShape(22.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
-                            border = BorderStroke(1.dp, Color(0xFFC8E6C9))
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .align(Alignment.Start),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    DetailedOpenBookDrawing()
-                                }
-                                
-                                Text(
-                                    "Vocabulary\nFlashcards",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF1B5E20)
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF2E7D32))
-                                        .align(Alignment.End),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Default.ArrowForward, contentDescription = "Go", tint = Color.White, modifier = Modifier.size(16.dp))
-                                }
+                            Icon(Icons.Default.AddCircleOutline, contentDescription = "Add custom", tint = Color(0xFFE65100))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Add Custom Word", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFE65100))
+                                Text("Save or add custom vocabs with phonetic translations", fontSize = 11.sp, color = Color(0xFFEF6C00))
                             }
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFFE65100))
                         }
-
-                        // Card B: Grammar Flashcards
-                        Card(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    viewModel.triggerBriefNotification("Grammar section is fully prepared! Launching Grammar Guide.")
-                                    activeSubTab = EnglishSubTab.GRAMMAR_FLASHCARDS
-                                },
-                            shape = RoundedCornerShape(22.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5)),
-                            border = BorderStroke(1.dp, Color(0xFFE1BEE7))
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .align(Alignment.Start),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    GrammarNoteDrawing()
-                                }
-
-                                Text(
-                                    "Grammar\nFlashcards",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF4A148C)
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF8E24AA))
-                                        .align(Alignment.End),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Default.ArrowForward, contentDescription = "Go", tint = Color.White, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                        }
-                    }
-
-                    // Skills quick practice lists
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        SkillPracticeRowItem(
-                            title = "Speaking Practice",
-                            desc = "Improve your speaking skills",
-                            icon = Icons.Default.Mic,
-                            color = Color(0xFF1E88E5),
-                            bg = Color(0xFFE3F2FD),
-                            onClick = { onGoToTab(1) } // Goes to Mission Speaking Challenge
-                        )
-                        SkillPracticeRowItem(
-                            title = "Listening",
-                            desc = "Listen and understand",
-                            icon = Icons.Default.Headphones,
-                            color = Color(0xFF8E24AA),
-                            bg = Color(0xFFF3E5F5),
-                            onClick = { onGoToTab(3) } // Goes to Games Audio listening quiz
-                        )
-                        SkillPracticeRowItem(
-                            title = "Reading",
-                            desc = "Read and grow your vocabulary",
-                            icon = Icons.Default.MenuBook,
-                            color = Color(0xFF2E7D32),
-                            bg = Color(0xFFE8F5E9),
-                            onClick = { onGoToTab(1) } // Goes to Mission Daily readings
-                        )
-                        SkillPracticeRowItem(
-                            title = "Daily Quiz",
-                            desc = "Test your knowledge daily",
-                            icon = Icons.Default.HelpOutline,
-                            color = Color(0xFFE65100),
-                            bg = Color(0xFFFFF3E0),
-                            onClick = { onGoToTab(3) } // Games / Quiz sandbox
-                        )
                     }
 
                     // Section Today's English Plan (Checklist with Plant Drawing on Right!)
@@ -2928,7 +3079,7 @@ fun VocabularyNotebookScreen(
                         )
 
                         IconButton(onClick = { showManualAddDialog = true }) {
-                            Icon(Icons.Default.MoreHoriz, contentDescription = "Actions", tint = Color(0xFF1E293B))
+                            Icon(Icons.Default.AddCircleOutline, contentDescription = "Add custom word", tint = Color(0xFF2E7D32))
                         }
                     }
 
@@ -2973,10 +3124,11 @@ fun VocabularyNotebookScreen(
                     var isFlipped by remember(activeDeckIndex) { mutableStateOf(false) }
                     val currentWordInfo = activeWordItem
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isFlipped = !isFlipped },
+                    if (currentWordInfo != null) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isFlipped = !isFlipped },
                         shape = RoundedCornerShape(28.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
@@ -3014,11 +3166,17 @@ fun VocabularyNotebookScreen(
                                         viewModel.triggerBriefNotification("Removed from bookmarked words")
                                     } else {
                                         viewModel.addWordManually(
-                                            currentWordInfo.word,
-                                            currentWordInfo.wordType,
-                                            currentWordInfo.meaning,
-                                            currentWordInfo.exampleSentence,
-                                            currentWordInfo.nativeMeaning
+                                            word = currentWordInfo.word,
+                                            type = currentWordInfo.wordType,
+                                            meaning = currentWordInfo.meaning,
+                                            sentence = currentWordInfo.exampleSentence,
+                                            nativeWord = currentWordInfo.nativeMeaning,
+                                            explanation = currentWordInfo.simpleExplanation,
+                                            pronunciation = currentWordInfo.pronunciation,
+                                            synonyms = currentWordInfo.synonyms,
+                                            antonyms = currentWordInfo.antonyms,
+                                            syllables = currentWordInfo.syllables,
+                                            imageUrl = currentWordInfo.imageUrl
                                         )
                                         viewModel.triggerBriefNotification("Successfully added to English Dictionary!")
                                     }
@@ -3038,11 +3196,37 @@ fun VocabularyNotebookScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
+                                    if (currentWordInfo.imageUrl.isNotEmpty()) {
+                                        coil.compose.AsyncImage(
+                                            model = currentWordInfo.imageUrl,
+                                            contentDescription = "Word illustration",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(140.dp)
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(Color(0xFFF1F5F9)),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                    }
+
                                     Text(
                                         currentWordInfo.word,
                                         style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold),
                                         color = Color(0xFF2E7D32)
                                     )
+
+                                    if (currentWordInfo.syllables.isNotEmpty()) {
+                                        Text(
+                                            "Syllables: ${currentWordInfo.syllables}",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                            color = Color(0xFFE65100),
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(Color(0xFFFFF3E0))
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+                                    }
 
                                     Text(
                                         currentWordInfo.pronunciation,
@@ -3142,8 +3326,10 @@ fun VocabularyNotebookScreen(
                                     Spacer(modifier = Modifier.height(6.dp))
 
                                     // Synonym & Antonym Pill Row
-                                    val synText = currentWordInfo.synonyms.split(";").firstOrNull()?.trim() ?: "adaptable"
-                                    val antText = currentWordInfo.antonyms.split(";").firstOrNull()?.trim() ?: "rigid"
+                                    val synList = currentWordInfo.synonyms.split(";").filter { it.isNotBlank() }
+                                    val antList = currentWordInfo.antonyms.split(";").filter { it.isNotBlank() }
+                                    val synDisp = if (synList.isNotEmpty()) synList.joinToString(", ") else "None"
+                                    val antDisp = if (antList.isNotEmpty()) antList.joinToString(", ") else "None"
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -3157,7 +3343,7 @@ fun VocabularyNotebookScreen(
                                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text("Synonym: $synText", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                                            Text("Synonym: $synDisp", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                                         }
                                         Box(
                                             modifier = Modifier
@@ -3167,7 +3353,7 @@ fun VocabularyNotebookScreen(
                                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text("Antonym: $antText", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE11D48))
+                                            Text("Antonym: $antDisp", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE11D48))
                                         }
                                     }
                                 }
@@ -3220,11 +3406,17 @@ fun VocabularyNotebookScreen(
                             icon = Icons.Default.Bookmark,
                             onClick = {
                                 viewModel.addWordManually(
-                                    currentWordInfo.word,
-                                    currentWordInfo.wordType,
-                                    currentWordInfo.meaning,
-                                    currentWordInfo.exampleSentence,
-                                    currentWordInfo.nativeMeaning
+                                    word = currentWordInfo.word,
+                                    type = currentWordInfo.wordType,
+                                    meaning = currentWordInfo.meaning,
+                                    sentence = currentWordInfo.exampleSentence,
+                                    nativeWord = currentWordInfo.nativeMeaning,
+                                    explanation = currentWordInfo.simpleExplanation,
+                                    pronunciation = currentWordInfo.pronunciation,
+                                    synonyms = currentWordInfo.synonyms,
+                                    antonyms = currentWordInfo.antonyms,
+                                    syllables = currentWordInfo.syllables,
+                                    imageUrl = currentWordInfo.imageUrl
                                 )
                                 viewModel.triggerBriefNotification("'${currentWordInfo.word}' bookmarks saved manually!")
                             },
@@ -3378,11 +3570,17 @@ fun VocabularyNotebookScreen(
                                             practiceFeedbackMsg = "Incredible sentence! Masterfully expressed context +15 XP rewarded."
                                             practiceSuccessStatus = true
                                             viewModel.addWordManually(
-                                                currentWordInfo.word,
-                                                currentWordInfo.wordType,
-                                                currentWordInfo.meaning,
-                                                currentWordInfo.exampleSentence,
-                                                currentWordInfo.nativeMeaning
+                                                word = currentWordInfo.word,
+                                                type = currentWordInfo.wordType,
+                                                meaning = currentWordInfo.meaning,
+                                                sentence = currentWordInfo.exampleSentence,
+                                                nativeWord = currentWordInfo.nativeMeaning,
+                                                explanation = currentWordInfo.simpleExplanation,
+                                                pronunciation = currentWordInfo.pronunciation,
+                                                synonyms = currentWordInfo.synonyms,
+                                                antonyms = currentWordInfo.antonyms,
+                                                syllables = currentWordInfo.syllables,
+                                                imageUrl = currentWordInfo.imageUrl
                                             )
                                         } else {
                                             practiceFeedbackMsg = "Please make sure to input a sentence containing the key term '${currentWordInfo.word}'."
@@ -3442,15 +3640,40 @@ fun VocabularyNotebookScreen(
                                         speakFeedbackText = "Awesome pronunciation of '${currentWordInfo.word}'! Voice overlap accuracy index: 98% (+10 XP)"
                                     }
                                 }
-
-                                speakFeedbackText?.let { txt ->
-                                    Text(
-                                        txt,
-                                        textAlign = TextAlign.Center,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF4A148C)
-                                    )
+                            }
+                        }
+                    }
+                    } else {
+                        // Fallback state layout representation when deck is empty
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(Icons.Default.PostAdd, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(54.dp))
+                                Text(
+                                    "No Words Here Yet",
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF1E293B),
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    "This word deck is currently empty. Try saving other interesting items or adding custom definitions using the button on the main tab!",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center
+                                )
+                                Button(
+                                    onClick = { activeSubTab = EnglishSubTab.DASHBOARD },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                                ) {
+                                    Text("Back to Dashboard", color = Color.White)
                                 }
                             }
                         }
@@ -3600,7 +3823,17 @@ fun VocabularyNotebookScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(48.dp))
                                 Text("No custom words match in database.", fontWeight = FontWeight.Bold, color = Color.Gray)
-                                Text("Bookmark interactive cards to build your dictionary list!", fontSize = 12.sp, color = Color.Gray)
+                                Text("Bookmark interactive cards or add manually!", fontSize = 12.sp, color = Color.Gray)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = { showManualAddDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Add Custom Word Manually")
+                                }
                             }
                         }
                     } else {
@@ -3612,10 +3845,29 @@ fun VocabularyNotebookScreen(
                                     border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp), 
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        if (w.imageUrl.isNotEmpty()) {
+                                            coil.compose.AsyncImage(
+                                                model = w.imageUrl,
+                                                contentDescription = "Word thumbnail",
+                                                modifier = Modifier
+                                                    .size(60.dp)
+                                                    .clip(RoundedCornerShape(10.dp))
+                                                    .background(Color(0xFFF1F5F9)),
+                                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                            )
+                                        }
+
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(w.word, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF2E7D32))
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically, 
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(w.word, fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color(0xFF2E7D32))
                                                 Box(
                                                     modifier = Modifier
                                                         .clip(RoundedCornerShape(6.dp))
@@ -3625,7 +3877,45 @@ fun VocabularyNotebookScreen(
                                                     Text(w.wordType, fontSize = 10.sp, color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
                                                 }
                                             }
-                                            Text(w.meaning, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+
+                                            if (w.syllables.isNotEmpty() || w.pronunciation.isNotEmpty()) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.padding(vertical = 2.dp)
+                                                ) {
+                                                    if (w.syllables.isNotEmpty()) {
+                                                        Text(
+                                                            w.syllables,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            color = Color(0xFFE65100),
+                                                            modifier = Modifier
+                                                                .clip(RoundedCornerShape(4.dp))
+                                                                .background(Color(0xFFFFF3E0))
+                                                                .padding(horizontal = 6.dp, vertical = 1.dp)
+                                                        )
+                                                    }
+                                                    if (w.pronunciation.isNotEmpty()) {
+                                                        Text(
+                                                            w.pronunciation,
+                                                            fontSize = 11.sp,
+                                                            color = Color.Gray
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Text(w.meaning, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF334155))
+
+                                            if (w.nativeMeaning.isNotEmpty()) {
+                                                Text(
+                                                    w.nativeMeaning,
+                                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Right),
+                                                    color = Color(0xFF1B5E20),
+                                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                                                )
+                                            }
                                         }
 
                                         IconButton(onClick = { viewModel.deleteWordFromNotebook(w) }) {
@@ -3649,13 +3939,31 @@ fun VocabularyNotebookScreen(
                 Button(
                     onClick = {
                         if (manualWord.isNotBlank() && manualMeaning.isNotBlank()) {
-                            viewModel.addWordManually(manualWord, manualWordType, manualMeaning, manualSentence, manualNative)
+                            viewModel.addWordManually(
+                                word = manualWord,
+                                type = manualWordType,
+                                meaning = manualMeaning,
+                                sentence = manualSentence,
+                                nativeWord = manualNative,
+                                explanation = manualExplanation,
+                                pronunciation = manualPronunciation,
+                                synonyms = manualSynonyms,
+                                antonyms = manualAntonyms,
+                                syllables = manualSyllables,
+                                imageUrl = manualImageUrl
+                            )
                             manualWord = ""
                             manualMeaning = ""
                             manualSentence = ""
                             manualNative = ""
+                            manualExplanation = ""
+                            manualPronunciation = ""
+                            manualSynonyms = ""
+                            manualAntonyms = ""
+                            manualSyllables = ""
+                            manualImageUrl = ""
                             showManualAddDialog = false
-                            viewModel.triggerBriefNotification("Manual saved word details updated!")
+                            viewModel.triggerBriefNotification("Custom word details added successfully to dictionary!")
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
@@ -3666,14 +3974,19 @@ fun VocabularyNotebookScreen(
             dismissButton = {
                 TextButton(onClick = { showManualAddDialog = false }) { Text("Cancel") }
             },
-            title = { Text("Add Word Manually", fontWeight = FontWeight.ExtraBold) },
+            title = { Text("Add Custom Word Details", fontWeight = FontWeight.ExtraBold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    OutlinedTextField(value = manualWord, onValueChange = { manualWord = it }, label = { Text("Word") }, modifier = Modifier.fillMaxWidth())
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    OutlinedTextField(
+                        value = manualWord, 
+                        onValueChange = { manualWord = it }, 
+                        label = { Text("Word (e.g. flexible)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     
                     // Word Type Selection
                     Column {
-                        Text("Word Type", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text("Word Type", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.Gray)
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             listOf("noun", "verb", "adjective", "phrase").forEach { t ->
                                 val active = manualWordType == t
@@ -3686,9 +3999,68 @@ fun VocabularyNotebookScreen(
                         }
                     }
 
-                    OutlinedTextField(value = manualMeaning, onValueChange = { manualMeaning = it }, label = { Text("Meaning") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = manualNative, onValueChange = { manualNative = it }, label = { Text("Native (Urdu)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = manualSentence, onValueChange = { manualSentence = it }, label = { Text("Example Sentence") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = manualMeaning, 
+                        onValueChange = { manualMeaning = it }, 
+                        label = { Text("Definition / Meaning (English)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    OutlinedTextField(
+                        value = manualNative, 
+                        onValueChange = { manualNative = it }, 
+                        label = { Text("Native Translation (Urdu Urdu)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = manualExplanation, 
+                        onValueChange = { manualExplanation = it }, 
+                        label = { Text("Detailed Explanation / Context") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    OutlinedTextField(
+                        value = manualSentence, 
+                        onValueChange = { manualSentence = it }, 
+                        label = { Text("Example Sentence / Usage") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = manualPronunciation, 
+                        onValueChange = { manualPronunciation = it }, 
+                        label = { Text("Pronunciation (e.g. /'flek.sə.bəl/)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = manualSyllables, 
+                        onValueChange = { manualSyllables = it }, 
+                        label = { Text("Syllables (e.g. flex-i-ble)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = manualSynonyms, 
+                        onValueChange = { manualSynonyms = it }, 
+                        label = { Text("Synonyms (use ';' e.g. adaptable;elastic)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = manualAntonyms, 
+                        onValueChange = { manualAntonyms = it }, 
+                        label = { Text("Antonyms (use ';' e.g. rigid;fixed)") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = manualImageUrl, 
+                        onValueChange = { manualImageUrl = it }, 
+                        label = { Text("Image Link / Illustration URL") }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         )
